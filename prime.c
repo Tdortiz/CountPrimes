@@ -1,23 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdbool.h>
 #include <pthread.h>
+#include <semaphore.h>
  
+/** An array of primes */
 int* primes; 
+/** The length of the array of primes */
 int* count;
+/** A semaphore for the multiple threads */
+sem_t sem;
 
 /** Temporary holder to pass an arguemnt to a thread */
 typedef struct {
-    int start;
-    int max;
-    int num_threads;
+    int start; // starting point
+    int max;   // ending point
 } ArgStruct;
 
+/**
+ * Used with qsort when debugging.
+ * @param a - an int
+ * @param b - an int
+ * @return 0 if equal, < 0 if a comes before, > 0 if a comes after
+ */
 int cmpfunc ( const void* a, const void* b){
    return ( *(int*)a - *(int*)b );
 }
 
-// Print out an error message and exit.
+/**
+ * Print out an error message and exits the program.
+ * @param message to send to stdout 
+ */
 static void fail( char const *message ) {
   fprintf( stderr, "%s\n", message );
   exit(1);
@@ -25,6 +39,7 @@ static void fail( char const *message ) {
 
 /**
  * Thread function to calculates prime numbers 
+ * @param param - state information for the specific thread
  */
 void* calculatePrime(void* param){
     // Cast param to ArgStruct and retreive min/max
@@ -32,36 +47,29 @@ void* calculatePrime(void* param){
     int min = astruct->start;
     int max = astruct->max;
 
-    printf("min=%d max=%d numthreads=%d\n", min, max, astruct->num_threads);
+    printf("%8s%d\t%8s%d\t\n","Min=", min, "Max=", max);
     
     // Calculates all prime numbers between 1 and a max value
-    for(int i = min; i <= max; i+= astruct->num_threads){
-        //printf("%d\n", i);
-        // If its 1 or 2 continue
-        if( i == 1 || i == 2 ) continue;
-
-        // If its divisible by 2 stop
-        if( i % 2 == 0 ) continue;
+    for(int i = min; i <= max; i++){
+        // If its 1 or 2 or even,  continue
+        if( i == 1 || i == 2 || i % 2 == 0 ) continue;
         
         // Every prime falls between +-1 of a multiple of 6
         if( ((i - 1)%6 == 0) || ((i + 1)%6 == 0) ){
             double sq = sqrt( (double) i);
-
-            // SQRT Test
-            for(int j = 0; j < (*count) ; j++){
-                
-                // Divisible by another  prime
-                if( i % primes[j] == 0 ) break;
-
-                // Siev Test
-                if( sq < primes[j] ){
-                    primes[(*count)] = i;
-                    (*count)++;
-                    break;
-                }
+            bool prime = true;
+            
+            // SQRT Test 
+            for( int j = 2; j <= sq; j++ ){       
+                if( i % j == 0 ) prime = false;
             }
-        } else { 
-            continue; 
+
+            if( prime ){
+                sem_wait(&sem);
+                primes[(*count)] = i;
+                (*count)++;
+                sem_post(&sem);
+            }
         }
     }
     
@@ -71,13 +79,28 @@ void* calculatePrime(void* param){
     return (void*)primes;
 }
 
-// The main method
+/**
+ * Sorts the prime numbers array and prints it out
+ */
+void sortAndPrint(){
+    qsort(primes, *count, sizeof(int), cmpfunc);
+    // Array printing loop
+    for(int i = 0; i < (*count); i++)
+        printf( "primes[%d] = %i\n", i, primes[i] );
+}
+
+/**
+ * The main method
+ * @param argc count of commandline args
+ * @param argv[] the array of args
+ */
 int main( int argc, char *argv[] ) {
     pthread_t thread[8];
     count = malloc(sizeof(int));
-    int max = 0 ; // max number to calculate primes up to
-    *count = 0;   // count of prime nums
+    int max = 0 ;       // max number to calculate primes up to
+    *count = 0;         // count of prime nums
     int numThreads = 1; // number of threads
+    sem_init(&sem, 0, 1);
     
     // Check if we have correct args for ./prime [numThreads] [max]
     if(argc == 3){
@@ -103,7 +126,16 @@ int main( int argc, char *argv[] ) {
         ArgStruct *astruct = (ArgStruct *)malloc( sizeof( ArgStruct ) );
         astruct->start = i;
         astruct->max = max;
-        astruct->num_threads = numThreads;
+
+        // calculate where to start
+        astruct->start = (max/numThreads)*i + 1;
+
+        // calculate where to end
+        int threadMax = max/numThreads*(i+1);
+        if( i == numThreads-1 ){
+            threadMax = max;
+        }
+        astruct->max = threadMax;
         
         // Create thread and send it to calculatePrime() with astruct data
         if(pthread_create(&thread[i], NULL, (void*)calculatePrime, astruct ) != 0 )
@@ -114,45 +146,12 @@ int main( int argc, char *argv[] ) {
     for(int i = 0; i < numThreads; i++)
         pthread_join( thread[i], NULL);
     
-    // Sorts the prime numbers
-    qsort(primes, *count, sizeof(int), cmpfunc);
-    // Array printing loop
-    //for(int i = 0; i < (*count); i++)
-       // printf( "primes[%d] = %i\n", i, primes[i] );
+    //sortAndPrint();
     printf( "num primes = %d\n", *count);
+    
     // Free memory used
     free(primes);
     free(count);
 
     return 0;
 }
-
-/**
-First 100 primes
-primes[0] = 2
-primes[1] = 3
-primes[2] = 5
-primes[3] = 7
-primes[4] = 11
-primes[5] = 13
-primes[6] = 17
-primes[7] = 19
-primes[8] = 23
-primes[9] = 29
-primes[10] = 31
-primes[11] = 37
-primes[12] = 41
-primes[13] = 43
-primes[14] = 47
-primes[15] = 53
-primes[16] = 59
-primes[17] = 61
-primes[18] = 67
-primes[19] = 71
-primes[20] = 73
-primes[21] = 79
-primes[22] = 83
-primes[23] = 89
-primes[24] = 97
-
-*/
