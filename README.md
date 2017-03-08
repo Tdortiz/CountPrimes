@@ -1,4 +1,7 @@
 # CountPrimes
+This is a multithreaded program that is used to quickly calculate all of the primes between 0 and a max number. In the program I utilize semaphores to safely lock threads and ensure no unsafe data interactions.
+
+
 This program is ran by compiling like so:
 
     gcc -Wall -std=c99 prime.c -lm -pthread -o prime
