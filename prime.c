@@ -63,7 +63,8 @@ void* calculatePrime(void* param){
             for( int j = 2; j <= sq; j++ ){       
                 if( i % j == 0 ) prime = false;
             }
-
+		
+            // If its a prime add it to the list
             if( prime ){
                 sem_wait(&sem);
                 primes[(*count)] = i;
