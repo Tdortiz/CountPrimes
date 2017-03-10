@@ -1,3 +1,9 @@
+/**
+ * File - prime.c
+ * This program calculates every prime number between 0 and a user-specified maximumm
+ * @author Thomas Ortiz (tdortiz@ncsu.edu)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
