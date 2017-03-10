@@ -18,7 +18,7 @@ int* count;
 /** A semaphore for the multiple threads */
 sem_t sem;
 
-/** Temporary holder to pass an arguemnt to a thread */
+/** Temporary data holder to pass an arguemnt to a thread */
 typedef struct {
     int start; // starting point
     int max;   // ending point
