@@ -1,6 +1,6 @@
 # CountPrimes
 ### Description
-This is a multithreaded program that is used to quickly calculate all of the primes between 0 and a max number. In the program I utilize semaphores to safely lock threads and ensure no unsafe data interactions.
+This is a multithreaded program that is used to quickly calculate all of the primes between 0 and a user-supplied max number. In the program I utilize semaphores to safely lock threads and ensure no unsafe data interactions.
 
 ### Compile With
 
