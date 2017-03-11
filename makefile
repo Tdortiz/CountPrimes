@@ -1,6 +1,9 @@
-CC = GCC
-CFLAGS = -Wall -std=c99 -lm -pthread
+CC = gcc
+CFLAGS = -Wall -std=c99
+LDFLAGS = -lm -pthread
 
-main: prime.o
+prime: prime.c
+	${CC} ${CFLAGS} prime.c ${LDFLAGS} -o prime
 
-main.o: 
+clean: 
+	rm -f *.o
