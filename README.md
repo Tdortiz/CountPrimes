@@ -3,7 +3,10 @@
 This is a multithreaded program that is used to quickly calculate all of the primes between 0 and a user-supplied max number. In the program I utilize semaphores to safely lock threads and ensure no unsafe data interactions.
 
 ### Compile With
-
+    make 
+    
+    Or 
+    
     gcc -Wall -std=c99 prime.c -lm -pthread -o prime
     
 ### To Run 
